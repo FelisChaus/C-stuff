@@ -1,3 +1,4 @@
-Relict C++ reference counting class.
+* ReferenceCounting.h: Relict C++ reference counting class.
 
-Bjarne Stroustrup, The C++ Programming Language Third Edition, 27.7
+References:
+* Bjarne Stroustrup, The C++ Programming Language Third Edition, 27.7
