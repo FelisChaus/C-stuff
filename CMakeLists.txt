@@ -1,8 +1,13 @@
-# Find OpenSSL library from brew setup.
 cmake_minimum_required(VERSION 3.21.2)
 project(OPEN_SSL_TRAINING VERSION 0.0.1)
-set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
-message("OPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}")
+message("CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
+#
+# Find OpenSSL library from brew setup.
+#
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
+    message("OPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}")
+endif()
 find_package(OpenSSL REQUIRED)
 message("OPENSSL_FOUND=${OPENSSL_FOUND}")
 message("OPENSSL_INCLUDE_DIR=${OPENSSL_INCLUDE_DIR}")
@@ -24,3 +29,17 @@ get_property(V5 TARGET OpenSSL::applink PROPERTY LOCATION)
 message("Target OpenSSL::applink=${V5}")
 get_property(V6 TARGET OpenSSL::applink PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 message("Target OpenSSL::applink=${V6}")
+#
+# Find Xerces-C library from brew setup.
+#
+find_package(XercesC REQUIRED)
+message("XercesC_FOUND=${XercesC_FOUND}")
+message("XercesC_VERSION=${XercesC_VERSION}")
+message("XercesC_INCLUDE_DIRS=${XercesC_INCLUDE_DIRS}")
+message("XercesC_LIBRARIES=${XercesC_LIBRARIES}")
+message("XercesC_INCLUDE_DIR=${XercesC_INCLUDE_DIR}")
+message("XercesC_LIBRARY=${XercesC_LIBRARY}")
+get_property(V7 TARGET XercesC::XercesC PROPERTY LOCATION)
+message("Target XercesC::XercesC=${V7}")
+get_property(V8 TARGET XercesC::XercesC PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+message("Target XercesC::XercesC=${V8}")
