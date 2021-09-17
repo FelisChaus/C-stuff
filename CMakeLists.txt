@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 3.21.2)
-project(OPEN_SSL_TRAINING VERSION 0.0.1)
-message("CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
+
+set(APP_VERSION_MAJOR 0)
+set(APP_VERSION_MINOR 0)
+set(APP_VERSION_PATCH 1)
+set(APP_VERSION ${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH})
+
+project(OPEN_SSL_TRAINING VERSION ${APP_VERSION} LANGUAGES C CXX)
+
+message("CMAKE_SYSTEM_NAME=" ${CMAKE_SYSTEM_NAME})
+message("CMAKE_BUILD_TYPE=" ${CMAKE_BUILD_TYPE})
+message("CMAKE_GENERATOR=" ${CMAKE_GENERATOR})
+message("CMAKE_GENERATOR_PLATFORM=" ${CMAKE_GENERATOR_PLATFORM})
+message("CMAKE_GENERATOR_TOOLSET=" ${CMAKE_GENERATOR_TOOLSET})
+message("CMAKE_GENERATOR_INSTANCE=" ${CMAKE_GENERATOR_INSTANCE})
+
 #
 # Find OpenSSL library from brew setup.
 #
@@ -9,7 +22,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message("OPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}")
 endif()
 find_package(OpenSSL REQUIRED)
+message("OPENSSL_FOUND=" ${OPENSSL_FOUND})
 message("OPENSSL_FOUND=${OPENSSL_FOUND}")
+message("OPENSSL_INCLUDE_DIR=" ${OPENSSL_INCLUDE_DIR})
 message("OPENSSL_INCLUDE_DIR=${OPENSSL_INCLUDE_DIR}")
 message("OPENSSL_CRYPTO_LIBRARY=${OPENSSL_CRYPTO_LIBRARY}")
 message("OPENSSL_SSL_LIBRARY=${OPENSSL_SSL_LIBRARY}")
@@ -29,6 +44,7 @@ get_property(V5 TARGET OpenSSL::applink PROPERTY LOCATION)
 message("Target OpenSSL::applink=${V5}")
 get_property(V6 TARGET OpenSSL::applink PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 message("Target OpenSSL::applink=${V6}")
+
 #
 # Find Xerces-C library from brew setup.
 #
@@ -43,3 +59,29 @@ get_property(V7 TARGET XercesC::XercesC PROPERTY LOCATION)
 message("Target XercesC::XercesC=${V7}")
 get_property(V8 TARGET XercesC::XercesC PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 message("Target XercesC::XercesC=${V8}")
+
+add_executable(testapp 
+    main.cpp
+)
+target_compile_definitions(testapp PRIVATE 
+    APP_VERSION="${APP_VERSION}"
+)
+target_compile_features(testapp PRIVATE cxx_std_20)
+message("CMAKE_CURRENT_SOURCE_DIR=" ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(testapp PRIVATE ${CMACMAKE_CURRENT_SOURCE_DIRKE_SYSTEM_NAME}/.)
+target_link_libraries(testapp PRIVATE 
+    ${OPENSSL_LIBRARIES} 
+    ${XercesC_LIBRARIES}
+)
+#set_target_properties(testapp OUTPUT_NAME testappXXX)
+
+# Print out compiler features.
+# foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
+#     message(${entry})
+# endforeach()
+
+# Example main.cpp:
+# #include <iostream>
+# int main() {
+#     std::cout << APP_VERSION << std::endl;
+# }
