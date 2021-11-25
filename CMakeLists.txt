@@ -60,28 +60,22 @@ message("Target XercesC::XercesC=${V7}")
 get_property(V8 TARGET XercesC::XercesC PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 message("Target XercesC::XercesC=${V8}")
 
-add_executable(testapp 
-    main.cpp
+add_executable(tcpsrv 
+    tcpsrv.cpp
 )
-target_compile_definitions(testapp PRIVATE 
+target_compile_definitions(tcpsrv PRIVATE 
     APP_VERSION="${APP_VERSION}"
 )
-target_compile_features(testapp PRIVATE cxx_std_20)
+target_compile_features(tcpsrv PRIVATE cxx_std_20)
 message("CMAKE_CURRENT_SOURCE_DIR=" ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(testapp PRIVATE ${CMACMAKE_CURRENT_SOURCE_DIRKE_SYSTEM_NAME}/.)
-target_link_libraries(testapp PRIVATE 
+target_include_directories(tcpsrv PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.)
+target_link_libraries(tcpsrv PRIVATE 
     ${OPENSSL_LIBRARIES} 
     ${XercesC_LIBRARIES}
 )
-#set_target_properties(testapp OUTPUT_NAME testappXXX)
+set_target_properties(tcpsrv PROPERTIES OUTPUT_NAME tcpsrv1)
 
 # Print out compiler features.
 # foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
 #     message(${entry})
 # endforeach()
-
-# Example main.cpp:
-# #include <iostream>
-# int main() {
-#     std::cout << APP_VERSION << std::endl;
-# }
