@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21.2)
+cmake_minimum_required(VERSION 3.22.0)
 
 set(APP_VERSION_MAJOR 0)
 set(APP_VERSION_MINOR 0)
@@ -67,6 +67,7 @@ target_compile_definitions(tcpsrv PRIVATE
     APP_VERSION="${APP_VERSION}"
 )
 target_compile_features(tcpsrv PRIVATE cxx_std_20)
+add_compile_options(-fmodules-ts)
 message("CMAKE_CURRENT_SOURCE_DIR=" ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tcpsrv PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.)
 target_link_libraries(tcpsrv PRIVATE 
@@ -76,6 +77,6 @@ target_link_libraries(tcpsrv PRIVATE
 set_target_properties(tcpsrv PROPERTIES OUTPUT_NAME tcpsrv1)
 
 # Print out compiler features.
-# foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
-#     message(${entry})
-# endforeach()
+#foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
+#    message(${entry})
+#endforeach()

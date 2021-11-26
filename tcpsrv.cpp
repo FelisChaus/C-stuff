@@ -93,13 +93,13 @@ static int getlistener() {
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    int enable = 1;
-    if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int))) {
+    option = 1;
+    if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
         std::cerr << "setsockopt(SO_REUSEADDR): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    if(setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int))) {
+    if(setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
         std::cerr << "setsockopt(SO_REUSEPORT): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
