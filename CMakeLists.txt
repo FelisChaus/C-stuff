@@ -40,10 +40,10 @@ get_property(V3 TARGET OpenSSL::Crypto PROPERTY LOCATION)
 message("Target OpenSSL::Crypto=${V3}")
 get_property(V4 TARGET OpenSSL::Crypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 message("Target OpenSSL::Crypto=${V4}")
-get_property(V5 TARGET OpenSSL::applink PROPERTY LOCATION)
-message("Target OpenSSL::applink=${V5}")
-get_property(V6 TARGET OpenSSL::applink PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-message("Target OpenSSL::applink=${V6}")
+#get_property(V5 TARGET OpenSSL::applink PROPERTY LOCATION)
+#message("Target OpenSSL::applink=${V5}")
+#get_property(V6 TARGET OpenSSL::applink PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+#message("Target OpenSSL::applink=${V6}")
 
 #
 # Find Xerces-C library from brew setup.
@@ -67,14 +67,33 @@ target_compile_definitions(tcpsrv PRIVATE
     APP_VERSION="${APP_VERSION}"
 )
 target_compile_features(tcpsrv PRIVATE cxx_std_20)
-add_compile_options(-fmodules-ts)
 message("CMAKE_CURRENT_SOURCE_DIR=" ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(tcpsrv PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.)
+target_include_directories(tcpsrv PRIVATE 
+    ${OPENSSL_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/.
+)
 target_link_libraries(tcpsrv PRIVATE 
     ${OPENSSL_LIBRARIES} 
     ${XercesC_LIBRARIES}
 )
 set_target_properties(tcpsrv PROPERTIES OUTPUT_NAME tcpsrv1)
+
+add_executable(tlsclient 
+    tlsclient.cpp
+)
+target_compile_definitions(tlsclient PRIVATE 
+    APP_VERSION="${APP_VERSION}"
+)
+target_compile_features(tlsclient PRIVATE cxx_std_20)
+target_include_directories(tlsclient PRIVATE 
+    ${OPENSSL_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/.
+)
+target_link_libraries(tlsclient PRIVATE 
+    ${OPENSSL_LIBRARIES} 
+    ${XercesC_LIBRARIES}
+)
+set_target_properties(tlsclient PROPERTIES OUTPUT_NAME tlsclient1)
 
 # Print out compiler features.
 #foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})

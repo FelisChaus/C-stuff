@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+#include <openssl/ssl.h>
+
 const int INVALID_SOCKET = -1;
 const char PORT[] = "8080";
 
@@ -66,10 +68,7 @@ static void getlocaladapters() {
 }
 
 static int getlistener() {
-    struct addrinfo hints = {0};
-    hints.ai_family = AF_INET6;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
+    struct addrinfo hints = { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
     struct addrinfo *bind_addr;
     int rv = getaddrinfo(0, PORT, &hints, &bind_addr);
     if(0 != rv) {
@@ -82,7 +81,7 @@ static int getlistener() {
         bind_addr->ai_socktype, 
         bind_addr->ai_protocol
     );
-    if(-1 == listener) {
+    if(INVALID_SOCKET == listener) {
         std::cerr << "socket(): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
@@ -117,9 +116,7 @@ static bool read(int peer) {
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(peer, &readfds);
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 500000;
+    struct timeval timeout = { .tv_sec = 1, .tv_usec = 500000 };
     int rv = select(peer + 1, &readfds, 0, 0, &timeout);
     if(-1 == rv) {
         std::cerr << "select(): " << strerror(errno) << std::endl;
@@ -155,9 +152,7 @@ static bool send(int peer, const void *buf, size_t len) {
         fd_set writefds;
         FD_ZERO(&writefds);
         FD_SET(peer, &writefds);
-        struct timeval timeout;
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 500000;
+        struct timeval timeout = { .tv_sec = 1, .tv_usec = 500000 };
         int rv = select(peer + 1, 0, &writefds, 0, &timeout);
         if(-1 == rv) {
             std::cerr << "select(): " << strerror(errno) << std::endl;
@@ -221,7 +216,8 @@ static void listen(int listener) {
 }
 
 int main() {
-    std::cout << APP_VERSION << std::endl;
+    std::cout << "Application version: " << APP_VERSION << std::endl;
+    std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << std::endl;
     getlocaladapters();
     int listener = getlistener();
     if(INVALID_SOCKET == listener) {
