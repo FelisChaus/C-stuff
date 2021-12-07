@@ -95,6 +95,24 @@ target_link_libraries(tlsclient PRIVATE
 )
 set_target_properties(tlsclient PROPERTIES OUTPUT_NAME tlsclient1)
 
+add_executable(tlssrv
+    tlssrv.cpp
+)
+target_compile_definitions(tlssrv PRIVATE 
+    APP_VERSION="${APP_VERSION}"
+    CMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+target_compile_features(tlssrv PRIVATE cxx_std_20)
+target_include_directories(tlssrv PRIVATE 
+    ${OPENSSL_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/.
+)
+target_link_libraries(tlssrv PRIVATE 
+    ${OPENSSL_LIBRARIES} 
+    ${XercesC_LIBRARIES}
+)
+set_target_properties(tlssrv PROPERTIES OUTPUT_NAME tlssrv1)
+
 # Print out compiler features.
 #foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
 #    message(${entry})

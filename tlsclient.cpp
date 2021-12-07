@@ -23,8 +23,10 @@
  */
 
 const int INVALID_SOCKET = -1;
-const char HOST[] = "openssl.org";
-const char PORT[] = "443";
+// const char HOST[] = "openssl.org";
+// const char PORT[] = "443";
+const char HOST[] = "::1";
+const char PORT[] = "8080";
 
 static void openssl_error(const char* hint) {
     unsigned long e;
@@ -49,7 +51,7 @@ int main() {
         return 1;
     }
 
-    if (!SSL_CTX_load_verify_locations(ctx, "trusted.pem",0)) {
+    if (!SSL_CTX_load_verify_locations(ctx, "trusted.pem", 0)) {
         std::cout << "SSL_CTX_load_verify_locations() failed" << std::endl;
     }
 
