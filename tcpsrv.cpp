@@ -41,8 +41,7 @@ static void getlocaladapters() {
         if(!ifa->ifa_addr) {
             continue;
         }
-        int family = ifa->ifa_addr->sa_family;
-        if(AF_INET == family || AF_INET6 == family) {
+        if(int family = ifa->ifa_addr->sa_family; AF_INET == family || AF_INET6 == family) {
             std::cout << ifa->ifa_name << "\t" << (family == AF_INET ? "AF_INET" : "AF_INET6") << "\t";
             if(family == AF_INET || family == AF_INET6) {
                 char host[NI_MAXHOST];
@@ -68,10 +67,9 @@ static void getlocaladapters() {
 }
 
 static int getlistener() {
-    struct addrinfo hints = { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
+    struct addrinfo hints { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
     struct addrinfo *bind_addr;
-    int rv = getaddrinfo(0, PORT, &hints, &bind_addr);
-    if(0 != rv) {
+    if(int rv = getaddrinfo(0, PORT, &hints, &bind_addr); 0 != rv) {
         std::cerr << "getaddrinfo(): " << gai_strerror(rv) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
@@ -86,19 +84,18 @@ static int getlistener() {
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    int option = 0; // Switching on 4&6 dual-stack socket.
-    if(setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option))) {
+    // Switching on IP4&IP6 dual-stack socket.
+    if(int option = 0; setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option))) {
         std::cerr << "setsockopt(): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    option = 1;
-    if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
+    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
         std::cerr << "setsockopt(SO_REUSEADDR): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    if(setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
+    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
         std::cerr << "setsockopt(SO_REUSEPORT): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
@@ -116,25 +113,21 @@ static bool read(int peer) {
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(peer, &readfds);
-    struct timeval timeout = { .tv_sec = 1, .tv_usec = 500000 };
-    int rv = select(peer + 1, &readfds, 0, 0, &timeout);
-    if(-1 == rv) {
+    struct timeval timeout { .tv_sec = 1, .tv_usec = 500000 };
+    if(int rv = select(peer + 1, &readfds, 0, 0, &timeout); -1 == rv) {
         std::cerr << "select(): " << strerror(errno) << std::endl;
         return false;
-    }
-    if(0 == rv) {
+    } else if(0 == rv) {
         std::cerr << "select(): timeout" << std::endl;
         return false;
     }
     // Here readfds set is modified by select() and only singnalling sockets remain.
     if(FD_ISSET(peer, &readfds)) {
-        char request[1024] = {0};
-        int bytes_received = recv(peer, request, 1024, 0);
-        if(-1 == bytes_received) {
+        char request[1024] {0};
+        if(int received = recv(peer, request, 1024, 0); -1 == received) {
             std::cerr << "recv(): " << strerror(errno) << std::endl;
             return false;
-        }
-        if(bytes_received > 0) {
+        } else if(received > 0) {
             if(strstr(request, favicon)) {
                 std::cout << favicon << std::endl;
             } else {
@@ -152,25 +145,23 @@ static bool send(int peer, const void *buf, size_t len) {
         fd_set writefds;
         FD_ZERO(&writefds);
         FD_SET(peer, &writefds);
-        struct timeval timeout = { .tv_sec = 1, .tv_usec = 500000 };
-        int rv = select(peer + 1, 0, &writefds, 0, &timeout);
-        if(-1 == rv) {
+        struct timeval timeout { .tv_sec = 1, .tv_usec = 500000 };
+        if(int rv = select(peer + 1, 0, &writefds, 0, &timeout); -1 == rv) {
             std::cerr << "select(): " << strerror(errno) << std::endl;
             return false;
-        }
-        if(0 == rv) {
+        } else if(0 == rv) {
             std::cerr << "select(): timeout" << std::endl;
             return false;
         }
         // Here writefds set is modified by select() and only singnalling sockets remain.
         if(FD_ISSET(peer, &writefds)) {
-            int bytes_sent = send(peer, p, l, 0);
-            if(-1 == bytes_sent) {
+            if(int sent = send(peer, p, l, 0); -1 == sent) {
                 std::cerr << "send(): " << strerror(errno) << std::endl;
                 return false;
+            } else {
+                l -= sent;
+                p += sent;
             }
-            l -= bytes_sent;
-            p += bytes_sent;
         }
     }
     return true;
@@ -204,8 +195,7 @@ static void listen(int listener) {
             std::cerr << "accept(): " << strerror(errno) << std::endl;
             return;
         }
-        int pid = fork();
-        if(0 == pid) { // Child process
+        if(int pid = fork(); 0 == pid) { // Child process
             response(peer, (struct sockaddr*)&client_addr, client_len);
             close(peer);
             close(listener);
