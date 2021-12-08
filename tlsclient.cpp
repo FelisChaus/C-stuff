@@ -23,10 +23,14 @@
  */
 
 const int INVALID_SOCKET = -1;
-// const char HOST[] = "openssl.org";
-// const char PORT[] = "443";
+
+#if 1
+const char HOST[] = "openssl.org";
+const char PORT[] = "443";
+#else
 const char HOST[] = "::1";
 const char PORT[] = "8080";
+#endif
 
 static void openssl_error(const char* hint) {
     unsigned long e;
@@ -51,14 +55,13 @@ int main() {
         return 1;
     }
 
-    if (!SSL_CTX_load_verify_locations(ctx, "trusted.pem", 0)) {
+    if (!SSL_CTX_load_verify_locations(ctx, "cert.pem", 0)) {
         std::cout << "SSL_CTX_load_verify_locations() failed" << std::endl;
     }
 
-    struct addrinfo hints = { .ai_socktype = SOCK_STREAM };
+    struct addrinfo hints { .ai_socktype = SOCK_STREAM };
     struct addrinfo *peer_addr;
-    auto rv = getaddrinfo(HOST, PORT, &hints, &peer_addr);
-    if (0 != rv) {
+    if (auto rv = getaddrinfo(HOST, PORT, &hints, &peer_addr); 0 != rv) {
         std::cerr << "getaddrinfo(): " << gai_strerror(rv) << std::endl;
         freeaddrinfo(peer_addr);
         return 1;
@@ -81,8 +84,7 @@ int main() {
     }
 
     // Async & nonblocking connect with timeout.
-    int flags;
-    flags = fcntl(peer, F_GETFL, 0);
+    int flags = fcntl(peer, F_GETFL, 0);
     fcntl(peer, F_SETFL, flags | O_NONBLOCK);
     if (connect(peer, peer_addr->ai_addr, peer_addr->ai_addrlen)) {
         if (errno != EINPROGRESS) {
@@ -96,7 +98,7 @@ int main() {
     fd_set set;
     FD_ZERO(&set);
     FD_SET(peer, &set);
-    struct timeval timeout = { .tv_sec = 5, .tv_usec = 0 };
+    struct timeval timeout { .tv_sec = 5, .tv_usec = 0 };
     select(peer + 1, 0, &set, 0, &timeout);
 
     SSL *ssl = SSL_new(ctx);
@@ -123,20 +125,18 @@ int main() {
         openssl_error("SSL_get_peer_certificate(): ");
         return 1;
     }
-    char *t;
-    if ((t = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0))) {
+    if (char *t = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0); t) {
         std::cout << "Subject: " << t << std::endl;
         OPENSSL_free(t);
     }
 
-    if ((t = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0))) {
+    if (char *t = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0); t) {
         std::cout << "Issuer: " << t << std::endl;
         OPENSSL_free(t);
     }
     X509_free(cert);
 
-    auto vr = SSL_get_verify_result(ssl);
-    if (vr == X509_V_OK) {
+    if (auto vr = SSL_get_verify_result(ssl); vr == X509_V_OK) {
         std::cout << "Certificates verified successfully" << std::endl;
     } else {
         std::cout << "Could not verify certificates: " << vr << std::endl;
@@ -152,13 +152,13 @@ int main() {
 
     SSL_write(ssl, buffer, strlen(buffer));
     while(1) {
-        int received = SSL_read(ssl, buffer, sizeof(buffer));
-        if (received < 1) {
+        if (int received = SSL_read(ssl, buffer, sizeof(buffer)); received < 1) {
             std::cout << std::endl << "Connection closed by peer" << std::endl;
             break;
+        } else {
+            // Compiler does not support std::format C++ 20 feature.
+            printf("Received (%d bytes): '%.*s'\n", received, received, buffer);
         }
-        // Compiler does not support std::format C++ 20 feature.
-        printf("Received (%d bytes): '%.*s'\n", received, received, buffer);
     }
 
     SSL_shutdown(ssl);
