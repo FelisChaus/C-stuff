@@ -37,10 +37,9 @@ static const char response_header[] =
     "Local time is: ";
 
 static int getlistener() {
-    struct addrinfo hints = { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
+    struct addrinfo hints { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
     struct addrinfo *bind_addr;
-    int rv = getaddrinfo(0, PORT, &hints, &bind_addr);
-    if(0 != rv) {
+    if(int rv = getaddrinfo(0, PORT, &hints, &bind_addr); 0 != rv) {
         std::cerr << "getaddrinfo(): " << gai_strerror(rv) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
@@ -55,19 +54,18 @@ static int getlistener() {
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    int option = 0; // Switching on 4&6 dual-stack socket.
-    if(setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option))) {
+    // Switching on 4&6 dual-stack socket.
+    if(int option = 0; setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option))) {
         std::cerr << "setsockopt(): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    option = 1;
-    if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
+    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
         std::cerr << "setsockopt(SO_REUSEADDR): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
     }
-    if(setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
+    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
         std::cerr << "setsockopt(SO_REUSEPORT): " << strerror(errno) << std::endl;
         freeaddrinfo(bind_addr);
         return INVALID_SOCKET;
@@ -136,8 +134,7 @@ static void listen(SSL_CTX *ctx, int listener) {
             std::cerr << "accept(): " << strerror(errno) << std::endl;
             return;
         }
-        int pid = fork();
-        if(0 == pid) { // Child process
+        if(int pid = fork(); 0 == pid) { // Child process
             response(ctx, peer, (struct sockaddr*)&client_addr, client_len);
             close(peer);
             close(listener);
@@ -162,7 +159,7 @@ int main() {
         return 1;
     }
 
-    char buff[4096] = {};
+    char buff[4096] {};
     sprintf(buff, "%s/cert.pem", CMAKE_CURRENT_SOURCE_DIR);
     if (!SSL_CTX_use_certificate_file(ctx, buff, SSL_FILETYPE_PEM)) {
         ERR_print_errors_fp(stderr);

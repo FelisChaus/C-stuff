@@ -24,7 +24,7 @@
 
 const int INVALID_SOCKET = -1;
 
-#if 1
+#if 0
 const char HOST[] = "openssl.org";
 const char PORT[] = "443";
 #else
