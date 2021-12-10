@@ -62,6 +62,7 @@ message("Target XercesC::XercesC=${V8}")
 
 add_executable(tcpsrv 
     tcpsrv.cpp
+    getlistener.cpp
 )
 target_compile_definitions(tcpsrv PRIVATE 
     APP_VERSION="${APP_VERSION}"
@@ -97,6 +98,7 @@ set_target_properties(tlsclient PROPERTIES OUTPUT_NAME tlsclient1)
 
 add_executable(tlssrv
     tlssrv.cpp
+    getlistener.cpp
 )
 target_compile_definitions(tlssrv PRIVATE 
     APP_VERSION="${APP_VERSION}"

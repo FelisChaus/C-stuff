@@ -9,6 +9,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "getlistener.h"
+
 /*
  * References:
  *
@@ -26,7 +28,6 @@
  * openssl x509 -text -noout -in cert.pem
  */
 
-const int INVALID_SOCKET = -1;
 const char PORT[] = "8080";
 
 static const char favicon[] = "GET /favicon.ico HTTP/1.1";
@@ -35,49 +36,6 @@ static const char response_header[] =
     "Connection: close\r\n"
     "Content-Type: text/plain\r\n\r\n"
     "Local time is: ";
-
-static int getlistener() {
-    struct addrinfo hints { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
-    struct addrinfo *bind_addr;
-    if(int rv = getaddrinfo(0, PORT, &hints, &bind_addr); 0 != rv) {
-        std::cerr << "getaddrinfo(): " << gai_strerror(rv) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    int listener = socket(
-        bind_addr->ai_family,
-        bind_addr->ai_socktype, 
-        bind_addr->ai_protocol
-    );
-    if(INVALID_SOCKET == listener) {
-        std::cerr << "socket(): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    // Switching on 4&6 dual-stack socket.
-    if(int option = 0; setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option))) {
-        std::cerr << "setsockopt(): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
-        std::cerr << "setsockopt(SO_REUSEADDR): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
-        std::cerr << "setsockopt(SO_REUSEPORT): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    if(bind(listener, bind_addr->ai_addr, bind_addr->ai_addrlen)) {
-        std::cerr << "bind(): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    freeaddrinfo(bind_addr);
-    return listener;
-}
 
 static void response(SSL_CTX *ctx, int peer, struct sockaddr* client_addr, socklen_t client_len) {
     char addr_buff[1024];
@@ -89,7 +47,7 @@ static void response(SSL_CTX *ctx, int peer, struct sockaddr* client_addr, sockl
         return;
     }
     SSL_set_fd(ssl, peer);
-    int rv;
+    int rv {};
     while(true) {
         rv = SSL_accept(ssl);
         if(rv <= 0) {
@@ -112,7 +70,7 @@ static void response(SSL_CTX *ctx, int peer, struct sockaddr* client_addr, sockl
     char request[4096];
     int received = SSL_read(ssl, request, sizeof(request));
     int sent = SSL_write(ssl, response_header, strlen(response_header));
-    time_t timer;
+    time_t timer {};
     time(&timer);
     char *time_msg = ctime(&timer);
     sent = SSL_write(ssl, time_msg, strlen(time_msg));
@@ -173,7 +131,7 @@ int main() {
         return 1;
     }
 
-    int listener = getlistener();
+    int listener = getlistener(PORT);
     if(INVALID_SOCKET == listener) {
         SSL_CTX_free(ctx);
         return 1;

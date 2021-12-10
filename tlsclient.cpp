@@ -60,7 +60,7 @@ int main() {
     }
 
     struct addrinfo hints { .ai_socktype = SOCK_STREAM };
-    struct addrinfo *peer_addr;
+    struct addrinfo *peer_addr {nullptr};
     if (auto rv = getaddrinfo(HOST, PORT, &hints, &peer_addr); 0 != rv) {
         std::cerr << "getaddrinfo(): " << gai_strerror(rv) << std::endl;
         freeaddrinfo(peer_addr);

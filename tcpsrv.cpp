@@ -7,7 +7,6 @@
 
 #include <openssl/ssl.h>
 
-const int INVALID_SOCKET = -1;
 const char PORT[] = "8080";
 
 static const char favicon[] = "GET /favicon.ico HTTP/1.1";
@@ -16,6 +15,8 @@ static const char response_header[] =
     "Connection: close\r\n"
     "Content-Type: text/plain\r\n\r\n"
     "Local time is: ";
+
+#include "getlistener.h"
 
 /*
  * References:
@@ -32,7 +33,7 @@ static const char response_header[] =
  */
 
 static void getlocaladapters() {
-    struct ifaddrs *ifaddr;
+    struct ifaddrs *ifaddr {nullptr};
     if(getifaddrs(&ifaddr) == -1) {
         std::cerr << "getifaddrs: " << strerror(errno) << std::endl;
         return;
@@ -64,49 +65,6 @@ static void getlocaladapters() {
         }
     }
     freeifaddrs(ifaddr);
-}
-
-static int getlistener() {
-    struct addrinfo hints { .ai_family = AF_INET6, .ai_socktype = SOCK_STREAM, .ai_flags = AI_PASSIVE };
-    struct addrinfo *bind_addr;
-    if(int rv = getaddrinfo(0, PORT, &hints, &bind_addr); 0 != rv) {
-        std::cerr << "getaddrinfo(): " << gai_strerror(rv) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    int listener = socket(
-        bind_addr->ai_family,
-        bind_addr->ai_socktype, 
-        bind_addr->ai_protocol
-    );
-    if(INVALID_SOCKET == listener) {
-        std::cerr << "socket(): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    // Switching on IP4&IP6 dual-stack socket.
-    if(int option = 0; setsockopt(listener, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option, sizeof(option))) {
-        std::cerr << "setsockopt(): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int))) {
-        std::cerr << "setsockopt(SO_REUSEADDR): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    if(int option = 1; setsockopt(listener, SOL_SOCKET, SO_REUSEPORT, &option, sizeof(int))) {
-        std::cerr << "setsockopt(SO_REUSEPORT): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    if(bind(listener, bind_addr->ai_addr, bind_addr->ai_addrlen)) {
-        std::cerr << "bind(): " << strerror(errno) << std::endl;
-        freeaddrinfo(bind_addr);
-        return INVALID_SOCKET;
-    }
-    freeaddrinfo(bind_addr);
-    return listener;
 }
 
 static bool read(int peer) {
@@ -209,7 +167,7 @@ int main() {
     std::cout << "Application version: " << APP_VERSION << std::endl;
     std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << std::endl;
     getlocaladapters();
-    int listener = getlistener();
+    int listener = getlistener(PORT);
     if(INVALID_SOCKET == listener) {
         return 1;
     }
