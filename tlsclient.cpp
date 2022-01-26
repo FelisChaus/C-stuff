@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <memory>
 
 #include <sys/socket.h>
 #include <netdb.h>
@@ -41,6 +42,17 @@ static void openssl_error(const char* hint) {
     }
 }
 
+static void SSL_CTX_free_local(SSL_CTX *ctx) {
+    std::cout << "SSL_CTX_free" << std::endl;
+    SSL_CTX_free(ctx);
+}
+
+static void SSL_shutdown_local(SSL *ssl) {
+    std::cout << "SSL_shutdown & free" << std::endl;
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+}
+
 int main() {
     std::cout << "Application version: " << APP_VERSION << std::endl;
     std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << std::endl;
@@ -49,13 +61,13 @@ int main() {
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
 
-    SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
+    std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free_local)> ctx { SSL_CTX_new(TLS_client_method()), &SSL_CTX_free_local };
     if (!ctx) {
         openssl_error("SSL_CTX_new(): ");
         return 1;
     }
 
-    if (!SSL_CTX_load_verify_locations(ctx, "cert.pem", 0)) {
+    if (!SSL_CTX_load_verify_locations(ctx.get(), "cert.pem", 0)) {
         std::cout << "SSL_CTX_load_verify_locations() failed" << std::endl;
     }
 
@@ -101,26 +113,26 @@ int main() {
     struct timeval timeout { .tv_sec = 5, .tv_usec = 0 };
     select(peer + 1, 0, &set, 0, &timeout);
 
-    SSL *ssl = SSL_new(ctx);
+    std::unique_ptr<SSL, decltype(&SSL_shutdown_local)> ssl { SSL_new(ctx.get()), &SSL_shutdown_local };
     if (!ssl) {
         openssl_error("SSL_new(): ");
         return 1;
     }
 
-    if (!SSL_set_tlsext_host_name(ssl, HOST)) {
+    if (!SSL_set_tlsext_host_name(ssl.get(), HOST)) {
         openssl_error("SSL_set_tlsext_host_name(): ");
         return 1;
     }
 
-    SSL_set_fd(ssl, peer);
-    if (SSL_connect(ssl) == -1) {
+    SSL_set_fd(ssl.get(), peer);
+    if (SSL_connect(ssl.get()) == -1) {
         openssl_error("SSL_connect(): ");
         return 1;
     }
 
-    std::cout << "SSL/TLS is using " << SSL_get_cipher(ssl) << std::endl;
+    std::cout << "SSL/TLS is using " << SSL_get_cipher(ssl.get()) << std::endl;
 
-    X509 *cert = SSL_get_peer_certificate(ssl);
+    X509 *cert = SSL_get_peer_certificate(ssl.get());
     if (!cert) {
         openssl_error("SSL_get_peer_certificate(): ");
         return 1;
@@ -136,7 +148,7 @@ int main() {
     }
     X509_free(cert);
 
-    if (auto vr = SSL_get_verify_result(ssl); vr == X509_V_OK) {
+    if (auto vr = SSL_get_verify_result(ssl.get()); vr == X509_V_OK) {
         std::cout << "Certificates verified successfully" << std::endl;
     } else {
         std::cout << "Could not verify certificates: " << vr << std::endl;
@@ -150,9 +162,9 @@ int main() {
     sprintf(buffer + strlen(buffer), "User-Agent: https_simple\r\n");
     sprintf(buffer + strlen(buffer), "\r\n");
 
-    SSL_write(ssl, buffer, strlen(buffer));
+    SSL_write(ssl.get(), buffer, strlen(buffer));
     while(1) {
-        if (int received = SSL_read(ssl, buffer, sizeof(buffer)); received < 1) {
+        if (int received = SSL_read(ssl.get(), buffer, sizeof(buffer)); received < 1) {
             std::cout << std::endl << "Connection closed by peer" << std::endl;
             break;
         } else {
@@ -161,8 +173,5 @@ int main() {
         }
     }
 
-    SSL_shutdown(ssl);
     close(peer);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
 }
