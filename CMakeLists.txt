@@ -14,6 +14,8 @@ message("CMAKE_GENERATOR_PLATFORM=" ${CMAKE_GENERATOR_PLATFORM})
 message("CMAKE_GENERATOR_TOOLSET=" ${CMAKE_GENERATOR_TOOLSET})
 message("CMAKE_GENERATOR_INSTANCE=" ${CMAKE_GENERATOR_INSTANCE})
 
+# See cmake/version/share/cmake/Modules/Find*.cmake for details.
+
 #
 # Find OpenSSL library from brew setup.
 #
