@@ -14,11 +14,12 @@ message("CMAKE_GENERATOR_PLATFORM=" ${CMAKE_GENERATOR_PLATFORM})
 message("CMAKE_GENERATOR_TOOLSET=" ${CMAKE_GENERATOR_TOOLSET})
 message("CMAKE_GENERATOR_INSTANCE=" ${CMAKE_GENERATOR_INSTANCE})
 
-# See cmake/version/share/cmake/Modules/Find*.cmake for details.
+#[==[
+Find OpenSSL library from brew setup.
+OPENSSL_ROOT_DIR must be set to the root of distributive.
 
-#
-# Find OpenSSL library from brew setup.
-#
+Note: see cmake/version/share/cmake/Modules/Find*.cmake for particular implementation details.
+#]==]
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message("HOMEBREW_PREFIX=" $ENV{HOMEBREW_PREFIX})
     set(OPENSSL_ROOT_DIR $ENV{HOMEBREW_PREFIX}/opt/openssl)
@@ -38,7 +39,7 @@ message("OPENSSL_SSL_LIBRARY=${OPENSSL_SSL_LIBRARY}")
 message("OPENSSL_SSL_LIBRARIES=${OPENSSL_SSL_LIBRARIES}")
 message("OPENSSL_LIBRARIES=${OPENSSL_LIBRARIES}")
 message("OPENSSL_VERSION=${OPENSSL_VERSION}")
-message("OPENSSL_APPLINK_SOURCE=${OPENSSL_APPLINK_SOURCE}")
+# target std properties.
 get_property(V1 TARGET OpenSSL::SSL PROPERTY LOCATION)
 message("Target OpenSSL::SSL=${V1}")
 get_property(V2 TARGET OpenSSL::SSL PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
@@ -47,14 +48,20 @@ get_property(V3 TARGET OpenSSL::Crypto PROPERTY LOCATION)
 message("Target OpenSSL::Crypto=${V3}")
 get_property(V4 TARGET OpenSSL::Crypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
 message("Target OpenSSL::Crypto=${V4}")
-#get_property(V5 TARGET OpenSSL::applink PROPERTY LOCATION)
-#message("Target OpenSSL::applink=${V5}")
-#get_property(V6 TARGET OpenSSL::applink PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-#message("Target OpenSSL::applink=${V6}")
+get_property(V5 TARGET OpenSSL::Crypto PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES)
+message("Target OpenSSL::Crypto=${V5}")
+#[==[
+# For MSVC only.
+message("OPENSSL_APPLINK_SOURCE=${OPENSSL_APPLINK_SOURCE}")
+get_property(V5 TARGET OpenSSL::applink PROPERTY LOCATION)
+message("Target OpenSSL::applink=${V5}")
+get_property(V6 TARGET OpenSSL::applink PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+message("Target OpenSSL::applink=${V6}")
+#]==]
 
-#
-# Find Xerces-C library from brew setup.
-#
+#[==[
+Find Xerces-C library from brew setup.
+#]==]
 find_package(XercesC REQUIRED)
 message("XercesC_FOUND=${XercesC_FOUND}")
 message("XercesC_VERSION=${XercesC_VERSION}")
@@ -75,14 +82,15 @@ target_compile_definitions(tcpsrv PRIVATE
     APP_VERSION="${APP_VERSION}"
 )
 target_compile_features(tcpsrv PRIVATE cxx_std_20)
+#target_compile_options
 message("CMAKE_CURRENT_SOURCE_DIR=" ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tcpsrv PRIVATE 
-    ${OPENSSL_INCLUDE_DIR}
+    OpenSSL::SSL
     ${CMAKE_CURRENT_SOURCE_DIR}/.
 )
 target_link_libraries(tcpsrv PRIVATE 
-    ${OPENSSL_LIBRARIES} 
-    ${XercesC_LIBRARIES}
+    OpenSSL::SSL
+    XercesC::XercesC
 )
 set_target_properties(tcpsrv PROPERTIES OUTPUT_NAME tcpsrv1)
 
@@ -94,12 +102,12 @@ target_compile_definitions(tlsclient PRIVATE
 )
 target_compile_features(tlsclient PRIVATE cxx_std_20)
 target_include_directories(tlsclient PRIVATE 
-    ${OPENSSL_INCLUDE_DIR}
+    OpenSSL::SSL
     ${CMAKE_CURRENT_SOURCE_DIR}/.
 )
 target_link_libraries(tlsclient PRIVATE 
-    ${OPENSSL_LIBRARIES} 
-    ${XercesC_LIBRARIES}
+    OpenSSL::SSL
+    XercesC::XercesC
 )
 set_target_properties(tlsclient PROPERTIES OUTPUT_NAME tlsclient1)
 
@@ -113,16 +121,18 @@ target_compile_definitions(tlssrv PRIVATE
 )
 target_compile_features(tlssrv PRIVATE cxx_std_20)
 target_include_directories(tlssrv PRIVATE 
-    ${OPENSSL_INCLUDE_DIR}
+    OpenSSL::SSL
     ${CMAKE_CURRENT_SOURCE_DIR}/.
 )
 target_link_libraries(tlssrv PRIVATE 
-    ${OPENSSL_LIBRARIES} 
-    ${XercesC_LIBRARIES}
+    OpenSSL::SSL
+    XercesC::XercesC
 )
 set_target_properties(tlssrv PROPERTIES OUTPUT_NAME tlssrv1)
 
+#[==[
 # Print out compiler features.
-#foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
-#    message(${entry})
-#endforeach()
+foreach(entry ${CMAKE_CXX_COMPILE_FEATURES})
+    message(${entry})
+endforeach()
+#]==]
