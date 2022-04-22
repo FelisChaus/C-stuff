@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22.0)
 
+include(CMakePrintHelpers)
+
 set(APP_VERSION_MAJOR 0)
 set(APP_VERSION_MINOR 0)
 set(APP_VERSION_PATCH 1)
@@ -17,7 +19,17 @@ message("CMAKE_BUILD_TYPE=" ${CMAKE_BUILD_TYPE})
 cmake -G "Unix Makefiles" ..
 #]==]
 message("CMAKE_GENERATOR=" ${CMAKE_GENERATOR})
+#[==[
+cmare read-only variables
+#]==]
+message("CMAKE_SOURCE_DIR=" ${CMAKE_SOURCE_DIR})
+message("CMAKE_BINARY_DIR=" ${CMAKE_BINARY_DIR})
 message("CMAKE_CURRENT_SOURCE_DIR=" ${CMAKE_CURRENT_SOURCE_DIR})
+message("CMAKE_CURRENT_BINARY_DIR=" ${CMAKE_BINARY_DIR})
+
+cmake_print_variables(CMAKE_HOST_SYSTEM_NAME)
+cmake_print_variables(CMAKE_SYSTEM_NAME)
+cmake_print_variables(CMAKE_CXX_COMPILER)
 
 #[==[
 Find OpenSSL library from brew setup.
@@ -32,31 +44,32 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message("homebrew_openssl@3=" ${o2})
 endif()
 find_package(OpenSSL REQUIRED)
-message("OPENSSL_VERSION=" ${OPENSSL_VERSION})
-get_property(o3 TARGET OpenSSL::SSL PROPERTY LOCATION)
-message("Target OpenSSL::SSL=" ${o3})
-get_property(o4 TARGET OpenSSL::SSL PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-message("Target OpenSSL::SSL=" ${o4})
-get_property(o5 TARGET OpenSSL::SSL PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES)
-message("Target OpenSSL::SSL=" ${o5})
-get_property(o6 TARGET OpenSSL::Crypto PROPERTY LOCATION)
-message("Target OpenSSL::Crypto=" ${o6})
-get_property(o7 TARGET OpenSSL::Crypto PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-message("Target OpenSSL::Crypto=" ${o7})
-get_property(o8 TARGET OpenSSL::Crypto PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES)
-message("Target OpenSSL::Crypto=" ${o8})
+#[==[ 
+Instead of 
+get_property(var TARGET OpenSSL::SSL PROPERTY LOCATION)
+#]==]
+cmake_print_variables(OPENSSL_VERSION)
+cmake_print_properties(TARGETS OpenSSL::SSL PROPERTIES 
+    LOCATION 
+    INTERFACE_INCLUDE_DIRECTORIES
+    IMPORTED_LINK_INTERFACE_LANGUAGES
+)
+cmake_print_properties(TARGETS OpenSSL::Crypto PROPERTIES 
+    LOCATION 
+    INTERFACE_INCLUDE_DIRECTORIES
+    IMPORTED_LINK_INTERFACE_LANGUAGES
+)
 
 #[==[
 Find Xerces-C library from brew setup.
 #]==]
 find_package(XercesC REQUIRED)
-message("XercesC_VERSION=" ${XercesC_VERSION})
-get_property(x1 TARGET XercesC::XercesC PROPERTY LOCATION)
-message("Target XercesC::XercesC=" ${x1})
-get_property(x2 TARGET XercesC::XercesC PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-message("Target XercesC::XercesC=" ${x2})
-get_property(x3 TARGET XercesC::XercesC PROPERTY IMPORTED_LINK_INTERFACE_LANGUAGES)
-message("Target XercesC::XercesC=" ${x3})
+cmake_print_variables(XercesC_VERSION)
+cmake_print_properties(TARGETS XercesC::XercesC PROPERTIES 
+    LOCATION 
+    INTERFACE_INCLUDE_DIRECTORIES
+    IMPORTED_LINK_INTERFACE_LANGUAGES
+)
 
 add_executable(tcpsrv 
     tcpsrv.cpp
